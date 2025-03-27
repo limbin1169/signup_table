@@ -3,36 +3,40 @@ import { Button, Checkbox, Table, Dropdown } from "antd";
 import type { TableColumnsType, TableProps } from "antd";
 import styled from "styled-components";
 import { MoreOutlined } from "@ant-design/icons";
+import { useCoreStore } from "./CoreProvider";
+import { MemberModelType } from "./stores/MemberModel";
+import { Observer } from "mobx-react";
+import { toJS } from "mobx";
 
-interface DataType {
-  key: React.Key;
-  name: string;
-  regiDate: string;
-  address?: string;
-  memo?: string;
-  job?: "개발자" | "PO" | "디자이너";
-  isMailAgreed?: boolean;
-}
-
-const App: React.FC = () => {
+const App = () => {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const { memberStore } = useCoreStore();
 
-  const handleMenuClick = (key: string, record: DataType) => {
+  const handleMenuClick = (key: string, member: MemberModelType) => {
     switch (key) {
       case "edit":
-        console.log("Edit clicked for", record);
-        // 수정 로직 구현
+        memberStore.updateMember(member.key, {
+          name: "임빈11111111111",
+        });
         break;
       case "delete":
-        console.log("Delete clicked for", record);
-        // 삭제 로직 구현
+        memberStore.removeMember(member.key);
         break;
       default:
         break;
     }
   };
 
-  const columns: TableColumnsType<DataType> = [
+  const handleAddClick = () => {
+    memberStore.addMember({
+      key: Date.now(),
+      name: "임빈",
+      regiDate: "123123",
+    });
+    console.log(toJS(memberStore.members));
+  };
+
+  const columns: TableColumnsType<MemberModelType> = [
     {
       title: "이름",
       dataIndex: "name",
@@ -58,19 +62,43 @@ const App: React.FC = () => {
     {
       title: "메모",
       dataIndex: "memo",
+      filters: [
+        {
+          text: "Joe",
+          value: "Joe",
+        },
+      ],
     },
     {
       title: "가입일",
       dataIndex: "regiDate",
+      filters: [
+        {
+          text: "Joe",
+          value: "Joe",
+        },
+      ],
     },
     {
       title: "직업",
       dataIndex: "job",
+      filters: [
+        {
+          text: "Joe",
+          value: "Joe",
+        },
+      ],
     },
     {
       title: "이메일 수신 동의",
       dataIndex: "isMailAgreed",
       render: (value: boolean) => <Checkbox checked={value} />,
+      filters: [
+        {
+          text: "Joe",
+          value: "Joe",
+        },
+      ],
     },
     {
       title: "",
@@ -103,28 +131,7 @@ const App: React.FC = () => {
     },
   ];
 
-  const data: DataType[] = [
-    {
-      key: 1,
-      name: "John Brown",
-      address: "서울 강남구",
-      memo: "외국인",
-      regiDate: "2024-10-02",
-      job: "개발자",
-      isMailAgreed: true,
-    },
-    {
-      key: 2,
-      name: "Foo Bar",
-      address: "서울 서초구",
-      memo: "한국인",
-      regiDate: "2024-10-01",
-      job: "PO",
-      isMailAgreed: false,
-    },
-  ];
-
-  const onChange: TableProps<DataType>["onChange"] = (
+  const onChange: TableProps<MemberModelType>["onChange"] = (
     pagination,
     filters,
     sorter,
@@ -133,9 +140,12 @@ const App: React.FC = () => {
     console.log("params", pagination, filters, sorter, extra);
   };
 
-  const rowSelection: TableProps<DataType>["rowSelection"] = {
+  const rowSelection: TableProps<MemberModelType>["rowSelection"] = {
     selectedRowKeys,
-    onChange: (selectedRowKeys: React.Key[], selectedRows: DataType[]) => {
+    onChange: (
+      selectedRowKeys: React.Key[],
+      selectedRows: MemberModelType[]
+    ) => {
       setSelectedRowKeys(selectedRowKeys);
       console.log(
         `selectedRowKeys: ${selectedRowKeys}`,
@@ -149,15 +159,20 @@ const App: React.FC = () => {
     <>
       <TitleWrapper>
         <Title>회원목록</Title>
-        <AddButton type="primary">+ 추가</AddButton>
+        <AddButton type="primary" onClick={handleAddClick}>
+          + 추가
+        </AddButton>
       </TitleWrapper>
-
-      <Table<DataType>
-        rowSelection={rowSelection}
-        columns={columns}
-        dataSource={data}
-        onChange={onChange}
-      />
+      <Observer>
+        {() => (
+          <Table<MemberModelType>
+            rowSelection={rowSelection}
+            columns={columns}
+            dataSource={memberStore.members}
+            onChange={onChange}
+          />
+        )}
+      </Observer>
     </>
   );
 };
