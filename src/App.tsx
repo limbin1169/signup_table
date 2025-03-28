@@ -3,15 +3,21 @@ import styled from "styled-components";
 import { useCoreStore } from "./CoreProvider";
 import { Observer } from "mobx-react";
 import { RecordModal, RecordTable } from "./components";
+import { RecordModel } from "./models";
 
 const App = () => {
   const { recordStore, uiStore } = useCoreStore();
 
   const handleAddClick = () => {
+    uiStore.setCurrentRecord();
     uiStore.setIsModalOpen(true);
   };
   const handleClose = () => {
     uiStore.setIsModalOpen(false);
+  };
+  const handleEditClick = (record: RecordModel) => {
+    uiStore.setCurrentRecord(record);
+    uiStore.setIsModalOpen(true);
   };
 
   return (
@@ -22,20 +28,24 @@ const App = () => {
           + 추가
         </AddButton>
       </TitleWrapper>
+
       <Observer>
         {() => (
           <RecordTable
             records={recordStore.records}
             fields={recordStore.fields}
+            onEdit={handleEditClick}
           />
         )}
       </Observer>
+
       <Observer>
         {() => (
           <RecordModal
             open={uiStore.isModalOpen}
             onClose={handleClose}
             fields={recordStore.fields}
+            initialValues={uiStore.currentRecord}
           />
         )}
       </Observer>

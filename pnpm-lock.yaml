@@ -11,6 +11,9 @@ dependencies:
   antd:
     specifier: ^5.15.1
     version: 5.24.5(react-dom@18.2.0)(react@18.2.0)
+  dayjs:
+    specifier: ^1.11.13
+    version: 1.11.13
   mobx:
     specifier: ^6.13.7
     version: 6.13.7

@@ -2,10 +2,10 @@ import { Button, Checkbox, DatePicker, Form, Input, Modal, Select } from "antd";
 import { useCoreStore } from "../CoreProvider";
 import { Observer } from "mobx-react";
 import styled from "styled-components";
-import { FieldModel, JobType, RecordModel } from "../models";
+import { FieldModel, RecordModel } from "../models";
 import { useEffect, useState } from "react";
 import TextArea from "antd/es/input/TextArea";
-import { toJS } from "mobx";
+import dayjs from "dayjs";
 
 interface RecordModalProps {
   open: boolean;
@@ -25,6 +25,7 @@ export const RecordModal: React.FC<RecordModalProps> = ({
   const [formValues, setFormValues] = useState<Partial<RecordModel>>({});
 
   const isSubmitDisabled = !formValues.name || !formValues.regiDate;
+
   useEffect(() => {
     if (open) {
       form.resetFields();
@@ -32,7 +33,17 @@ export const RecordModal: React.FC<RecordModalProps> = ({
 
       if (initialValues) {
         const values = { ...initialValues };
-        form.setFieldsValue(values);
+
+        const formValues = { ...values };
+
+        if (values.regiDate) {
+          const dayjsObj = dayjs(values.regiDate);
+          if (dayjsObj.isValid()) {
+            formValues.regiDate = dayjsObj;
+          }
+        }
+
+        form.setFieldsValue(formValues);
         setFormValues(values);
       } else {
         form.setFieldsValue({ job: "개발자" });
@@ -42,22 +53,27 @@ export const RecordModal: React.FC<RecordModalProps> = ({
   }, [open, initialValues, form, fields]);
 
   const handleValuesChange = (changedValues: any) => {
-    setFormValues((prev) => ({ ...prev, ...changedValues }));
+    const updatedValues = { ...changedValues };
+
+    Object.keys(changedValues).forEach((key) => {
+      const field = fields.find((x) => x.id === key);
+      if (field?.type === "date" && changedValues[key]) {
+        updatedValues[key] = changedValues[key].format("YYYY-MM-DD");
+      }
+    });
+
+    setFormValues((prev) => ({ ...prev, ...updatedValues }));
   };
 
   const handleFinish = () => {
-    console.log(`formValues`, formValues);
-    recordStore.addRecord(formValues);
-    console.log(toJS(recordStore.records));
-  };
+    const values = { ...formValues };
+    if (initialValues) {
+      recordStore.updateRecord(values);
+    } else {
+      recordStore.addRecord(values);
+    }
 
-  const handleDateChange = (date: any, dateString: string | string[]) => {
-    if (Array.isArray(dateString)) return;
-    setFormValues((prev) => ({ ...prev, regiDate: dateString }));
-  };
-
-  const handleSelectChange = (value: JobType) => {
-    form.setFieldValue("job", value);
+    onClose();
   };
 
   const renderItems = (field: FieldModel) => {
@@ -73,12 +89,12 @@ export const RecordModal: React.FC<RecordModalProps> = ({
           <DatePicker
             style={{ width: "100%" }}
             placeholder={"Select date"}
-            onChange={handleDateChange}
+            format="YYYY-MM-DD"
           />
         );
       case "select":
         return (
-          <Select style={{ width: `85px` }} onChange={handleSelectChange}>
+          <Select style={{ width: `85px` }}>
             {selectBoxOptions?.map((option) => (
               <Select.Option key={option.value} value={option.value}>
                 {option.label}
@@ -97,7 +113,7 @@ export const RecordModal: React.FC<RecordModalProps> = ({
     <Observer>
       {() => (
         <StyledModal
-          title="회원 추가"
+          title={initialValues ? "회원 수정" : "회원 추가"}
           open={open}
           width={520}
           onCancel={onClose}

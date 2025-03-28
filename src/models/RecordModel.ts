@@ -1,4 +1,7 @@
+import dayjs from "dayjs";
 import { makeAutoObservable } from "mobx";
+
+let idCounter = 2;
 
 export type JobType = "개발자" | "PO" | "디자이너";
 
@@ -7,16 +10,20 @@ export class RecordModel {
   name: string = "";
   address?: string;
   memo?: string;
-  regiDate: string = "";
+  regiDate: string | dayjs.Dayjs = "";
   job?: JobType;
   isMailAgreed: boolean = false;
 
   constructor(data?: Partial<RecordModel>) {
+    makeAutoObservable(this);
+
     if (data) {
+      if (!data?.id) {
+        idCounter++;
+        this.id = idCounter + "";
+      }
       this.setValues(data);
     }
-
-    makeAutoObservable(this);
   }
 
   setValues(data: Partial<RecordModel>) {
