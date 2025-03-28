@@ -6,6 +6,7 @@ import { FieldModel, RecordModel } from "../models";
 import { useEffect, useState } from "react";
 import TextArea from "antd/es/input/TextArea";
 import dayjs from "dayjs";
+import { CloseOutlined } from "@ant-design/icons";
 
 interface RecordModalProps {
   open: boolean;
@@ -83,7 +84,13 @@ export const RecordModal: React.FC<RecordModalProps> = ({
       case "text":
         return <Input placeholder={"Input"} />;
       case "textarea":
-        return <TextArea rows={4} placeholder={"Textarea"} />;
+        return (
+          <TextArea
+            rows={4}
+            placeholder={"Textarea"}
+            style={{ resize: "none" }}
+          />
+        );
       case "date":
         return (
           <DatePicker
@@ -94,7 +101,7 @@ export const RecordModal: React.FC<RecordModalProps> = ({
         );
       case "select":
         return (
-          <Select style={{ width: `85px` }}>
+          <Select>
             {selectBoxOptions?.map((option) => (
               <Select.Option key={option.value} value={option.value}>
                 {option.label}
@@ -113,13 +120,17 @@ export const RecordModal: React.FC<RecordModalProps> = ({
     <Observer>
       {() => (
         <StyledModal
-          title={initialValues ? "회원 수정" : "회원 추가"}
           open={open}
           width={520}
+          closable={false}
           onCancel={onClose}
           footer={null}
         >
-          <Form
+          <Header>
+            <span>{initialValues ? "회원 수정" : "회원 추가"}</span>
+            <CloseOutlined onClick={onClose} />
+          </Header>
+          <StyledForm
             form={form}
             layout="vertical"
             onFinish={handleFinish}
@@ -127,7 +138,7 @@ export const RecordModal: React.FC<RecordModalProps> = ({
             autoComplete="off"
           >
             {fields.map((field) => (
-              <Form.Item
+              <StyledFormItem
                 key={field.id}
                 name={field.id}
                 label={
@@ -143,27 +154,19 @@ export const RecordModal: React.FC<RecordModalProps> = ({
                 valuePropName={field.type === "checkbox" ? "checked" : "value"}
               >
                 {renderItems(field)}
-              </Form.Item>
+              </StyledFormItem>
             ))}
-            <Form.Item>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  gap: "8px",
-                }}
-              >
-                <Button onClick={onClose}>취소</Button>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  disabled={isSubmitDisabled}
-                >
-                  확인
-                </Button>
-              </div>
-            </Form.Item>
-          </Form>
+          </StyledForm>
+          <FooterWrapper>
+            <Button onClick={onClose}>취소</Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              disabled={isSubmitDisabled}
+            >
+              저장
+            </Button>
+          </FooterWrapper>
         </StyledModal>
       )}
     </Observer>
@@ -172,6 +175,71 @@ export const RecordModal: React.FC<RecordModalProps> = ({
 
 const StyledModal = styled(Modal)`
   & .ant-modal-content {
-    padding: 12px;
+    padding: 0px;
   }
+`;
+
+const Header = styled.div`
+  height: 46px;
+
+  border-bottom: 1px solid;
+  border-color: #f0f0f0;
+  padding: 0 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  > span {
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 22px;
+  }
+`;
+
+const StyledForm = styled(Form)`
+  padding: 10px 24px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  div:nth-child(3) {
+    height: 104px;
+  }
+  div:nth-child(4) {
+    width: 162px;
+  }
+  div:nth-child(5) {
+    width: 91px;
+  }
+  div:nth-child(6) {
+    height: 62px;
+  }
+`;
+
+const StyledFormItem = styled(Form.Item)`
+  margin: 0;
+  height: 72px;
+  display: flex;
+  justify-content: flex-end;
+  flex-direction: column;
+
+  textarea {
+    height: 64px;
+  }
+  span {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 22px;
+  }
+`;
+
+const FooterWrapper = styled.div`
+  padding: 12px 16px;
+  background-color: rgba(0, 0, 0, 0.02);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid;
+  border-color: #f0f0f0;
 `;
