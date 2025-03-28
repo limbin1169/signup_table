@@ -5,6 +5,7 @@ import { styled } from "styled-components";
 import { FieldModel, RecordModel } from "../models";
 import { Observer } from "mobx-react";
 import { toJS } from "mobx";
+import { useState } from "react";
 
 interface RecordTableProps {
   records: RecordModel[];
@@ -18,7 +19,7 @@ export const RecordTable: React.FC<RecordTableProps> = ({
   onEdit,
 }) => {
   const { recordStore } = useCoreStore();
-
+  const [current, setCurrent] = useState<Partial<RecordModel>[]>([]);
   const getColumnWidth = (fieldId: string) => {
     switch (fieldId) {
       case "id":
@@ -46,11 +47,22 @@ export const RecordTable: React.FC<RecordTableProps> = ({
         onEdit(record);
         break;
       case "delete":
-        recordStore.removeRecord(record.id);
+        if (current.length > 1) {
+          recordStore.removeRecords(current);
+        } else {
+          recordStore.removeRecord(record.id);
+        }
+
         break;
       default:
         break;
     }
+  };
+
+  const rowSelection = {
+    onChange: (selectedRowKeys: React.Key[], selectedRows: RecordModel[]) => {
+      setCurrent(selectedRows);
+    },
   };
 
   return (
@@ -110,6 +122,7 @@ export const RecordTable: React.FC<RecordTableProps> = ({
                     key: "edit",
                     label: "수정",
                     onClick: () => handleMenuClick("edit", record),
+                    disabled: current.length !== 0,
                   },
                   {
                     key: "delete",
@@ -131,7 +144,14 @@ export const RecordTable: React.FC<RecordTableProps> = ({
 
         const columns = [...fieldColumns, actionColumn];
 
-        return <Table columns={columns} dataSource={dataSource} rowKey="id" />;
+        return (
+          <Table
+            columns={columns}
+            dataSource={dataSource}
+            rowSelection={{ type: "checkbox", ...rowSelection }}
+            rowKey="id"
+          />
+        );
       }}
     </Observer>
   );

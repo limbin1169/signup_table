@@ -1,4 +1,4 @@
-import { makeAutoObservable } from "mobx";
+import { makeAutoObservable, transaction } from "mobx";
 import {
   columnFields,
   FieldModel,
@@ -41,5 +41,16 @@ export class RecordStore {
 
   removeRecord(id: string) {
     this._records = this._records.filter((record) => record.id !== id);
+  }
+
+  removeRecords(data: Partial<RecordModel>[]) {
+    if (!data.length) return;
+
+    const targets = data.map((record) => record.id);
+    transaction(() => {
+      this._records = this._records.filter(
+        (record) => !targets.includes(record.id)
+      );
+    });
   }
 }
