@@ -116,6 +116,7 @@ export const RecordTable: React.FC<RecordTableProps> = ({
           width: 50,
           render: (_: any, record: RecordModel) => (
             <Dropdown
+              overlayStyle={{ width: "180px" }}
               menu={{
                 items: [
                   {
@@ -124,6 +125,7 @@ export const RecordTable: React.FC<RecordTableProps> = ({
                     onClick: () => handleMenuClick("edit", record),
                     disabled: current.length !== 0,
                   },
+                  { type: "divider" },
                   {
                     key: "delete",
                     label: "삭제",

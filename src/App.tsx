@@ -19,7 +19,7 @@ const App = () => {
     uiStore.setCurrentRecord(record);
     uiStore.setIsModalOpen(true);
   };
-
+  // console.log(import.meta.env.VITE_STORAGE);
   return (
     <>
       <TitleWrapper>
