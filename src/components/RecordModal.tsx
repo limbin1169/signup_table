@@ -66,7 +66,7 @@ export const RecordModal: React.FC<RecordModalProps> = ({
     setFormValues((prev) => ({ ...prev, ...updatedValues }));
   };
 
-  const handleFinish = () => {
+  const handleSubmitClick = () => {
     const values = { ...formValues };
     if (initialValues) {
       recordStore.updateRecord(values);
@@ -133,7 +133,6 @@ export const RecordModal: React.FC<RecordModalProps> = ({
           <StyledForm
             form={form}
             layout="vertical"
-            onFinish={handleFinish}
             onValuesChange={handleValuesChange}
             autoComplete="off"
           >
@@ -161,7 +160,7 @@ export const RecordModal: React.FC<RecordModalProps> = ({
             <Button onClick={onClose}>취소</Button>
             <Button
               type="primary"
-              htmlType="submit"
+              onClick={handleSubmitClick}
               disabled={isSubmitDisabled}
             >
               저장
