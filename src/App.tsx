@@ -13,6 +13,7 @@ const App = () => {
   const handleClose = () => {
     uiStore.setIsModalOpen(false);
   };
+
   return (
     <>
       <TitleWrapper>
@@ -30,7 +31,13 @@ const App = () => {
         )}
       </Observer>
       <Observer>
-        {() => <RecordModal open={uiStore.isModalOpen} onClose={handleClose} />}
+        {() => (
+          <RecordModal
+            open={uiStore.isModalOpen}
+            onClose={handleClose}
+            fields={recordStore.fields}
+          />
+        )}
       </Observer>
     </>
   );

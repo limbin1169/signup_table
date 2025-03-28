@@ -3,6 +3,8 @@ import { useCoreStore } from "../CoreProvider";
 import { MoreOutlined } from "@ant-design/icons";
 import { styled } from "styled-components";
 import { FieldModel, RecordModel } from "../models";
+import { toJS } from "mobx";
+import { Observer } from "mobx-react";
 
 interface RecordTableProps {
   records: RecordModel[];
@@ -37,6 +39,7 @@ export const RecordTable: React.FC<RecordTableProps> = ({
 
   const actionColumn = {
     title: "",
+    key: "action",
     width: 50,
     render: (_: any, record: RecordModel) => (
       <Dropdown
@@ -71,6 +74,7 @@ export const RecordTable: React.FC<RecordTableProps> = ({
     switch (key) {
       case "edit":
         recordStore.updateRecord({
+          id: record.id,
           name: "임빈11111111111",
         });
         break;
@@ -82,7 +86,11 @@ export const RecordTable: React.FC<RecordTableProps> = ({
     }
   };
 
-  return <Table columns={columns} dataSource={records} />;
+  return (
+    <Observer>
+      {() => <Table columns={columns} dataSource={records} rowKey="id" />}
+    </Observer>
+  );
 };
 
 export default RecordTable;
