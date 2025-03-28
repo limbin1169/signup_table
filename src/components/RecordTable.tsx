@@ -264,7 +264,7 @@ export const RecordTable: React.FC<RecordTableProps> = ({
         });
 
         return (
-          <Table
+          <StyledTable
             columns={columns}
             dataSource={filteredData}
             rowSelection={{ type: "checkbox", ...rowSelection }}
@@ -289,11 +289,7 @@ const ActionButton = styled.button`
   color: rgba(0, 0, 0, 0.65);
 
   &:hover {
-    color: #1890ff;
-  }
-
-  .anticon {
-    font-size: 16px;
+    color: #739fff;
   }
 `;
 
@@ -304,5 +300,12 @@ const FilterContainer = styled.div`
     gap: 8px;
     display: flex;
     flex-direction: column;
+  }
+`;
+
+const StyledTable = styled(Table<RecordModel>)`
+  tr > td:nth-child(1) {
+    border-right: 1px solid;
+    border-color: #f0f0f0;
   }
 `;
