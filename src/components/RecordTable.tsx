@@ -1,4 +1,4 @@
-import { Table, Dropdown, Checkbox } from "antd";
+import { Table, Dropdown, Checkbox, Menu } from "antd";
 import { useCoreStore } from "../CoreProvider";
 import { MoreOutlined } from "@ant-design/icons";
 import { styled } from "styled-components";
@@ -6,6 +6,7 @@ import { FieldModel, RecordModel } from "../models";
 import { Observer } from "mobx-react";
 import { toJS } from "mobx";
 import { useState } from "react";
+import { FilterDropdownProps } from "antd/es/table/interface";
 
 interface RecordTableProps {
   records: RecordModel[];
@@ -20,6 +21,8 @@ export const RecordTable: React.FC<RecordTableProps> = ({
 }) => {
   const { recordStore } = useCoreStore();
   const [current, setCurrent] = useState<Partial<RecordModel>[]>([]);
+  const [filters, setFilters] = useState<{ [key: string]: any }>({});
+
   const getColumnWidth = (fieldId: string) => {
     switch (fieldId) {
       case "id":
@@ -52,7 +55,6 @@ export const RecordTable: React.FC<RecordTableProps> = ({
         } else {
           recordStore.removeRecord(record.id);
         }
-
         break;
       default:
         break;
@@ -63,6 +65,21 @@ export const RecordTable: React.FC<RecordTableProps> = ({
     onChange: (selectedRowKeys: React.Key[], selectedRows: RecordModel[]) => {
       setCurrent(selectedRows);
     },
+  };
+
+  const handleFilterChange = (fieldId: string, value: any) => {
+    const newFilters = { ...filters };
+
+    if (newFilters[fieldId]?.includes(value)) {
+      newFilters[fieldId] = newFilters[fieldId].filter((x: any) => x !== value);
+      if (newFilters[fieldId].length === 0) {
+        delete newFilters[fieldId];
+      }
+    } else {
+      newFilters[fieldId] = [...(newFilters[fieldId] || []), value];
+    }
+
+    setFilters(newFilters);
   };
 
   return (
@@ -87,8 +104,40 @@ export const RecordTable: React.FC<RecordTableProps> = ({
             dataIndex: field.id,
             key: field.id,
             width: getColumnWidth(field.id),
-            filters: filterOptions.length > 0 ? filterOptions : undefined,
-            onFilter: (value: any, record: RecordModel) => {
+
+            filterDropdown: ({
+              setSelectedKeys,
+              confirm,
+            }: FilterDropdownProps) => {
+              return (
+                <FilterContainer>
+                  <Menu
+                    items={filterOptions.map((option) => ({
+                      key: String(option.value),
+                      label: (
+                        <Checkbox
+                          checked={filters[field.id]?.includes(option.value)}
+                          onChange={() => {
+                            handleFilterChange(field.id, option.value);
+                            setSelectedKeys(
+                              filters[field.id]?.includes(option.value)
+                                ? filters[field.id].filter(
+                                    (x: any) => x !== option.value
+                                  )
+                                : [...(filters[field.id] || []), option.value]
+                            );
+                            confirm();
+                          }}
+                        >
+                          {option.text}
+                        </Checkbox>
+                      ),
+                    }))}
+                  />
+                </FilterContainer>
+              );
+            },
+            onFilter: (value, record: RecordModel) => {
               const fieldValue = record[field.id as keyof RecordModel];
 
               if (typeof fieldValue === "boolean") {
@@ -101,10 +150,61 @@ export const RecordTable: React.FC<RecordTableProps> = ({
 
           if (field.id === "isMailAgreed") {
             column.render = (value: boolean) => <Checkbox checked={value} />;
-            column.filters = [
-              { text: "선택됨", value: "true" },
-              { text: "선택 안함", value: "false" },
-            ];
+            column.filterDropdown = ({
+              setSelectedKeys,
+              confirm,
+            }: FilterDropdownProps) => {
+              return (
+                <FilterContainer>
+                  <Menu
+                    items={[
+                      {
+                        key: "true",
+                        label: (
+                          <Checkbox
+                            checked={filters[field.id]?.includes("true")}
+                            onChange={() => {
+                              handleFilterChange(field.id, "true");
+                              setSelectedKeys(
+                                filters[field.id]?.includes("true")
+                                  ? filters[field.id].filter(
+                                      (x: any) => x !== "true"
+                                    )
+                                  : [...(filters[field.id] || []), "true"]
+                              );
+                              confirm();
+                            }}
+                          >
+                            선택됨
+                          </Checkbox>
+                        ),
+                      },
+                      {
+                        key: "false",
+                        label: (
+                          <Checkbox
+                            checked={filters[field.id]?.includes("false")}
+                            onChange={() => {
+                              handleFilterChange(field.id, "false");
+                              setSelectedKeys(
+                                filters[field.id]?.includes("false")
+                                  ? filters[field.id].filter(
+                                      (x: any) => x !== "false"
+                                    )
+                                  : [...(filters[field.id] || []), "false"]
+                              );
+                              confirm();
+                            }}
+                          >
+                            선택 안함
+                          </Checkbox>
+                        ),
+                      },
+                    ]}
+                  />
+                </FilterContainer>
+              );
+            };
           }
 
           return column;
@@ -128,8 +228,7 @@ export const RecordTable: React.FC<RecordTableProps> = ({
                   { type: "divider" },
                   {
                     key: "delete",
-                    label: "삭제",
-                    danger: true,
+                    label: <span style={{ color: "#FF4D4F" }}>삭제</span>,
                     onClick: () => handleMenuClick("delete", record),
                   },
                 ],
@@ -146,10 +245,28 @@ export const RecordTable: React.FC<RecordTableProps> = ({
 
         const columns = [...fieldColumns, actionColumn];
 
+        const filteredData = dataSource.filter((record) => {
+          for (const fieldId in filters) {
+            if (filters[fieldId] && filters[fieldId].length > 0) {
+              const fieldValue = record[fieldId as keyof RecordModel];
+
+              const matches = filters[fieldId].some((filterValue: any) => {
+                if (typeof fieldValue === "boolean") {
+                  return fieldValue === (filterValue === "true");
+                }
+                return String(fieldValue).includes(String(filterValue));
+              });
+
+              if (!matches) return false;
+            }
+          }
+          return true;
+        });
+
         return (
           <Table
             columns={columns}
-            dataSource={dataSource}
+            dataSource={filteredData}
             rowSelection={{ type: "checkbox", ...rowSelection }}
             rowKey="id"
           />
@@ -177,5 +294,15 @@ const ActionButton = styled.button`
 
   .anticon {
     font-size: 16px;
+  }
+`;
+
+const FilterContainer = styled.div`
+  padding: 8px;
+  min-width: 150px;
+  > ul {
+    gap: 8px;
+    display: flex;
+    flex-direction: column;
   }
 `;
